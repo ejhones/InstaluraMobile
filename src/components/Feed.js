@@ -1,11 +1,10 @@
 import React, {Component} from 'react';
-import {StyleSheet, FlatList} from 'react-native';
+import {StyleSheet, FlatList,View, Button} from 'react-native';
 import Post from './Post';
 
 export default class Feed extends Component {
 
     constructor() {
-
       super();
       this.state = {
         fotos: []
@@ -13,11 +12,9 @@ export default class Feed extends Component {
     }
 
     componentDidMount() {
-      /*fetch('https://instalura-api.herokuapp.com/api/public/fotos/rafael')
+      fetch('https://instalura-api.herokuapp.com/api/public/fotos/rafael')
         .then(resposta => resposta.json())
-        .then(json => this.setState({fotos: json}));*/
-
-        this.apiFetch();
+        .then(json => this.setState({fotos: json}));
     }
 
     async apiFetch() {
@@ -89,6 +86,12 @@ export default class Feed extends Component {
     
     render() {
         return (
+        <View>
+            <Button title='Modal' onPress={()=>{this.props.navigator.showModal({
+                screen: 'AluraLingua',
+                title: 'Alura Lingua'
+            })}}
+        />
           <FlatList style={styles.container}
             keyExtractor={item => String(item.id) }
             data={this.state.fotos}
@@ -97,6 +100,7 @@ export default class Feed extends Component {
                 comentarioCallback={this.adicionarComentario} />
             }
           />
+          </View>
         );
     }
 }

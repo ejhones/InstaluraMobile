@@ -48,9 +48,6 @@ export default class Login extends Component {
                     screen: 'Feed',
                     title: 'Instalura',
                 });
-/*
-                AsyncStorage.getItem('token').
-                    then(token => console.warn(token));*/
             })
             .catch(error => this.setState({mensagem: error.mensagem}));
     }
