@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import {StyleSheet, FlatList,View, Button, AsyncStorage} from 'react-native';
 import Post from './Post';
 import InstaluraFetchService from '../service/InstaluraFetchService';
+import Notificacao from '../api/Notificacao.android';
 
 export default class Feed extends Component {
 
@@ -32,6 +33,7 @@ export default class Feed extends Component {
     }
 
     like = (idFoto) => {
+        const listaOriginal = this.state.fotos;
         const foto = this.buscarPorId(idFoto);
 
         AsyncStorage.getItem('usuario')
@@ -60,13 +62,16 @@ export default class Feed extends Component {
             this.atualizaFoto(fotoAtualizada);
         });
 
-        InstaluraFetchService.post(`/fotos/${idFoto}/like`);
+        InstaluraFetchService.post(`/fotos/${idFoto}/like`)
+        .catch(e => {
+            this.setState({fotos: listaOriginal});
+            Notificacao.exibe('Ops..', 'Algo deu errado ao curtir');
+        });
 
     }
 
     adicionarComentario = (idFoto, valorComentario, inputComentario) => {
-
-        
+        const listaOriginal = this.state.fotos;
 
         if (valorComentario === '')
             return;
@@ -90,6 +95,10 @@ export default class Feed extends Component {
             }
             this.atualizaFoto(fotoAtualizada);
             inputComentario.clear();
+        })
+        .catch(e => {
+            this.setState({fotos: listaOriginal});
+            Notificacao.exibe('Ops..', 'Algo deu errado ao curtir');
         });
     }
 
@@ -103,15 +112,25 @@ export default class Feed extends Component {
 
         this.setState({ fotos });
     }
+
+    logout = () => {
+        AsyncStorage.removeItem('usuario');
+        AsyncStorage.removeItem('token');
+        this.props.navigator.resetTo({
+            screen: 'Login',
+            title: 'Instalura'
+        });
+    }
     
     render() {
         return (
         <View>
+            <Button title='Logout' onPress={this.logout} />
             <Button title='Modal' onPress={()=>{this.props.navigator.showModal({
                 screen: 'AluraLingua',
                 title: 'Alura Lingua'
             })}}
-        />
+             />
           <FlatList style={styles.container}
             keyExtractor={item => String(item.id) }
             data={this.state.fotos}
