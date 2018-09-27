@@ -13,10 +13,10 @@ export default class Feed extends Component {
     }
 
     componentDidMount() {
-        InstaluraFetchService.get()
+        InstaluraFetchService.get('/fotos')
             .then(json => this.setState({ fotos: json }));
 
-        const uri = 'https://instalura-api.herokuapp.com/api/fotos'
+        //const uri = 'https://instalura-api.herokuapp.com/api/fotos'
 
         // AsyncStorage.getItem('token')
         //     .then(token => {
@@ -60,44 +60,28 @@ export default class Feed extends Component {
             this.atualizaFoto(fotoAtualizada);
         });
 
-        const uri = 'https://instalura-api.herokuapp.com/api/fotos/${idFoto}/like';
-        AsyncStorage.getItem('token')
-        .then(token => {
-            return{
-                method: 'POST',
-                headers: new Headers({
-                    'X-AUTH-TOKEN': token
-                })
-            }
-        })
-        .then(requestInfo => fetch(uri, requestInfo));
+        InstaluraFetchService.post(`/fotos/${idFoto}/like`);
 
     }
 
-    adicionarComentario = (idFoto, valorComenario, inputComentario) => {
+    adicionarComentario = (idFoto, valorComentario, inputComentario) => {
 
-        if (valorComenario === '')
+        
+
+        if (valorComentario === '')
             return;
 
         const foto = this.buscarPorId(idFoto);
 
-        const uri = 'https://instalura-api.herokuapp.com/api/fotos/${idFoto}/comment';
+        if (!foto) {
+            return;
+        }
 
-        AsyncStorage.getItem('token')
-        .then(token => {
-            return{
-                method: 'POST',
-                body: JSON.stringify({
-                    texto: valorComenario
-                }),
-                headers: new Headers({
-                    'Content-Type' : 'application/json',
-                    'X-AUTH-TOKEN': token
-                })
-            };
-        })
-        .then(requestInfo => fetch(uri, requestInfo))
-        .then(resposta => resposta.json())
+        const comentario = {
+            texto: valorComentario
+        };
+
+        InstaluraFetchService.post(`/fotos/${idFoto}/comment`, comentario)
         .then(comentario => [...foto.comentarios, comentario])
         .then(novaLista => {
             const fotoAtualizada = {
