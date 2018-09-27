@@ -10,27 +10,28 @@ Navigation.registerComponent('Login', () => Login);
 Navigation.registerComponent('Feed', () => Feed);
 Navigation.registerComponent('AluraLingua', () => AluraLingua);
 
+
 AsyncStorage.getItem('token')
     .then(token => {
 
         if (token) {
-            return{
-                screen:'Feed',
+            return {
+                screen: 'Feed',
                 title: 'Instalura',
             };
         }
         return {
-            screen: {
-                screen: 'Login',
-                title: 'Login'
-            }
+            screen: 'Login',
+            title: 'Login'
         }
     })
-    .then(screen => Navigation.startSingleScreenApp({screen}));
+    .then(screen => Navigation.startSingleScreenApp({ screen }));
 
-// Navigation.startSingleScreenApp({
-//     screen: {
-//         screen: 'Login',
-//         title: 'Login'
-//     }
-// })
+    /*
+ Navigation.startSingleScreenApp({
+     screen: {
+         screen: 'Login',
+         title: 'Login'
+     }
+ })
+ */

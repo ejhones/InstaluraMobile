@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
-import {StyleSheet, FlatList,View, Button} from 'react-native';
+import {StyleSheet, FlatList,View, Button, AsyncStorage} from 'react-native';
 import Post from './Post';
+import InstaluraFetchService from '../service/InstaluraFetchService';
 
 export default class Feed extends Component {
 
@@ -12,65 +13,100 @@ export default class Feed extends Component {
     }
 
     componentDidMount() {
-      fetch('https://instalura-api.herokuapp.com/api/public/fotos/rafael')
-        .then(resposta => resposta.json())
-        .then(json => this.setState({fotos: json}));
+        InstaluraFetchService.get()
+            .then(json => this.setState({ fotos: json }));
+
+        const uri = 'https://instalura-api.herokuapp.com/api/fotos'
+
+        // AsyncStorage.getItem('token')
+        //     .then(token => {
+        //         return {
+        //             headers: new Headers({
+        //                 'X-AUTH-TOKEN': token
+        //             })
+        //         }
+        //     })
+        //     .then(requestInfo => fetch(uri, requestInfo))
+        //     .then(resposta => resposta.json())
+        //     .then(json => this.setState({ fotos: json }));
     }
 
-    async apiFetch() {
-      const resposta = await fetch('https://instalura-api.herokuapp.com/api/public/fotos/rafael');
-
-      const json = await resposta.json();
-
-      this.setState({fotos: json});
-    }
-    
     like = (idFoto) => {
         const foto = this.buscarPorId(idFoto);
 
-        let novaLista = [];
+        AsyncStorage.getItem('usuario')
+        .then(usuarioLogado => {
+            let novaLista = [];
+            
+            if (!foto.likeada) {
+                novaLista = [
+                    ...foto.likers,
+                    { login: usuarioLogado }
+                ];
+            } else {
+                novaLista = foto.likers.filter(liker => {
+                    return liker.login !== usuarioLogado
+                });
+            }
+            return novaLista;
+            })
+        .then(novaLista => {
+            const fotoAtualizada = {
+                ...foto,
+                likeada: !foto.likeada,
+                likers: novaLista
+            };
+    
+            this.atualizaFoto(fotoAtualizada);
+        });
 
-        if (!foto.likeada) {
-            novaLista = [
-                ...foto.likers,
-                { login: 'meuUsuario' }
-            ];
-        } else {
-            novaLista = foto.likers.filter(liker => {
-                return liker.login !== 'meuUsuario'
-            });
-        }
+        const uri = 'https://instalura-api.herokuapp.com/api/fotos/${idFoto}/like';
+        AsyncStorage.getItem('token')
+        .then(token => {
+            return{
+                method: 'POST',
+                headers: new Headers({
+                    'X-AUTH-TOKEN': token
+                })
+            }
+        })
+        .then(requestInfo => fetch(uri, requestInfo));
 
-        const fotoAtualizada = {
-            ...foto,
-            likeada: !foto.likeada,
-            likers: novaLista
-        }
-
-        this.atualizaFoto(fotoAtualizada);
     }
 
     adicionarComentario = (idFoto, valorComenario, inputComentario) => {
-    
+
         if (valorComenario === '')
             return;
-        
+
         const foto = this.buscarPorId(idFoto);
 
-        const novaLista = [...foto.comentarios, {
-            id: valorComenario,
-            login: 'meuUsuario',
-            texto: valorComenario,
-        }];
+        const uri = 'https://instalura-api.herokuapp.com/api/fotos/${idFoto}/comment';
 
-        const fotoAtualizada = {
-            ...foto,
-            comentarios: novaLista,
-        }
-
-        this.atualizaFoto(fotoAtualizada);
-
-        inputComentario.clear();
+        AsyncStorage.getItem('token')
+        .then(token => {
+            return{
+                method: 'POST',
+                body: JSON.stringify({
+                    texto: valorComenario
+                }),
+                headers: new Headers({
+                    'Content-Type' : 'application/json',
+                    'X-AUTH-TOKEN': token
+                })
+            };
+        })
+        .then(requestInfo => fetch(uri, requestInfo))
+        .then(resposta => resposta.json())
+        .then(comentario => [...foto.comentarios, comentario])
+        .then(novaLista => {
+            const fotoAtualizada = {
+                ...foto,
+                comentarios: novaLista
+            }
+            this.atualizaFoto(fotoAtualizada);
+            inputComentario.clear();
+        });
     }
 
     buscarPorId(idFoto){
