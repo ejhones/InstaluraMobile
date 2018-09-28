@@ -3,6 +3,7 @@ import {StyleSheet, FlatList,View, Button, AsyncStorage} from 'react-native';
 import Post from './Post';
 import InstaluraFetchService from '../service/InstaluraFetchService';
 import Notificacao from '../api/Notificacao.android';
+import HeaderUsuario from './HeaderUsuario';
 
 export default class Feed extends Component {
 
@@ -14,22 +15,14 @@ export default class Feed extends Component {
     }
 
     componentDidMount() {
+        let uri = '/fotos'
+
+        if(this.props.usuario){
+            uri = 'public/fotos/${this.props.usuario}'
+        }
+
         InstaluraFetchService.get('/fotos')
             .then(json => this.setState({ fotos: json }));
-
-        //const uri = 'https://instalura-api.herokuapp.com/api/fotos'
-
-        // AsyncStorage.getItem('token')
-        //     .then(token => {
-        //         return {
-        //             headers: new Headers({
-        //                 'X-AUTH-TOKEN': token
-        //             })
-        //         }
-        //     })
-        //     .then(requestInfo => fetch(uri, requestInfo))
-        //     .then(resposta => resposta.json())
-        //     .then(json => this.setState({ fotos: json }));
     }
 
     like = (idFoto) => {
@@ -122,21 +115,47 @@ export default class Feed extends Component {
         });
     }
     
+    verPerfilUsuario = (idFoto) => {
+        const foto = this.buscarPorId(idFoto);
+        
+        this.props.navigator.push({
+            screen: 'PerfilUsuario',
+            title: foto.loginUsuario,
+            backButtonTitle: '',
+            passProps:{
+                usuario: foto.loginUsuario,
+                fotoDePerfil: foto.urlPerfil
+            }
+        });
+    }
+
+    exibeHeader(){
+        if (this.props.usuario) {
+            return <HeaderUsuario {...this.props}
+                posts={this.state.fotos.length}/>
+        }else{
+            return(<View>
+                    <Button title='Logout' onPress={this.logout} />
+                    <Button title='Modal' onPress={()=>{this.props.navigator.showModal({
+                    screen: 'AluraLingua',
+                    title: 'Alura Lingua'
+                    })}}/>
+                </View>)
+        }
+    }
+
     render() {
         return (
         <View>
-            <Button title='Logout' onPress={this.logout} />
-            <Button title='Modal' onPress={()=>{this.props.navigator.showModal({
-                screen: 'AluraLingua',
-                title: 'Alura Lingua'
-            })}}
-             />
+            {this.exibeHeader()}
           <FlatList style={styles.container}
             keyExtractor={item => String(item.id) }
             data={this.state.fotos}
             renderItem={({item}) =>
-                <Post foto={item} likeCallback={this.like}
-                comentarioCallback={this.adicionarComentario} />
+                <Post foto={item} 
+                likeCallback={this.like}
+                comentarioCallback={this.adicionarComentario}
+                verPerfilCallback={this.verPerfilUsuario} />
             }
           />
           </View>
@@ -146,7 +165,6 @@ export default class Feed extends Component {
 
 const styles = StyleSheet.create({
   container: {
-     /*marginTop: Plataform.OS == 'ios' ? 20 : 0,*/
     borderRadius: 4,
     borderWidth: 0.5,
     borderColor: '#ddd',
