@@ -15,6 +15,14 @@ export default class Feed extends Component {
     }
 
     componentDidMount() {
+        this.props.navigator.setOnNavigatorEvent(evento => {
+            if (evento.id === 'willAppear') {
+                this.carregaFotos();
+            }
+        });
+    }
+
+    carregaFotos(){
         let uri = '/fotos'
 
         if(this.props.usuario){
@@ -24,6 +32,7 @@ export default class Feed extends Component {
         InstaluraFetchService.get('/fotos')
             .then(json => this.setState({ fotos: json }));
     }
+
 
     like = (idFoto) => {
         const listaOriginal = this.state.fotos;
